@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Admin - Verificação</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f2f4f8;
+  margin:0;
+  padding:20px;
+}
+h2{text-align:center;color:#1c92d2;}
+
+.card{
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+  margin-bottom:10px;
+  box-shadow:0 3px 8px rgba(0,0,0,.1);
+}
+.card b{color:#1c92d2;}
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  margin-right:5px;
+}
+.aprovar{background:#25d366;color:white;}
+.excluir{background:#e74c3c;color:white;}
+</style>
+</head>
+<body>
+
+<h2>Empresas NÃO verificadas</h2>
+<div id="lista"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getFirestore, collection, query, where,
+  onSnapshot, updateDoc, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+ apiKey:"AIzaSyDDykQQH_vhq9lj4dlwPZgtrZQDFr8eVcI",
+ authDomain:"dona-paula-pix.firebaseapp.com",
+ projectId:"dona-paula-pix",
+ storageBucket:"dona-paula-pix.firebasestorage.app",
+ messagingSenderId:"786103759925",
+ appId:"1:786103759925:web:592b34220b9a38753f2d7c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const lista = document.getElementById("lista");
+
+// 🔎 BUSCAR APENAS NÃO VERIFICADOS
+const q = query(collection(db,"servicos"), where("verificado","==",false));
+
+onSnapshot(q, snap=>{
+  lista.innerHTML="";
+  if(snap.empty){
+    lista.innerHTML="<p>Nenhuma empresa pendente.</p>";
+    return;
+  }
+
+  snap.forEach(d=>{
+    const p = d.data();
+    lista.innerHTML += `
+      <div class="card">
+        <b>${p.nome}</b><br>
+        Tipo: ${p.tipo}<br>
+        WhatsApp: ${p.telefone}<br>
+        Endereço: ${p.endereco}<br><br>
+        <button class="aprovar" onclick="aprovar('${d.id}')">✔ Verificar</button>
+        <button class="excluir" onclick="excluir('${d.id}')">🗑 Excluir</button>
+      </div>
+    `;
+  });
+});
+
+window.aprovar = async(id)=>{
+  if(!confirm("Confirmar verificação?")) return;
+  await updateDoc(doc(db,"servicos",id),{
+    verificado:true
+  });
+  alert("Empresa verificada!");
+}
+
+window.excluir = async(id)=>{
+  if(!confirm("Excluir empresa?")) return;
+  await deleteDoc(doc(db,"servicos",id));
+  alert("Empresa excluída!");
+}
+</script>
+
+</body>
+</html>
